@@ -22,7 +22,8 @@ class Player:
             self.tank.move(dis,EnemyTank.tanks,PlayerTank.tanks,Terrain.terraninsObs)
             if gunpos:
                 self.tank.gunpos()
-        #分数记录
+        #TODO 分数记录
+
     def createTank(self):
         tank=PlayerTank((0,0),self.num)
         tank.setCollection(self)

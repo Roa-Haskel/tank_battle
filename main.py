@@ -37,6 +37,7 @@ if __name__ == '__main__':
 
     #创建控制器
     controller=Controller()
+
     #创建player1
     player1=Player(3,1,controller=controller)
 
@@ -45,11 +46,8 @@ if __name__ == '__main__':
     for i in range(0,len(ls),2):
         ls[i]='b'
     enemy=Enemy(ls,4)
-
-    while True:
-        if start:
-            startSound.play()
-            start=0
+    startSound.play()
+    while player1.life:
 
         controller.loop()
         player1.update()
