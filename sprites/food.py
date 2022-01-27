@@ -14,11 +14,14 @@ class Food(AbsSparite):
         self.life=configure.foods.life
         super().__init__(self.foods)
     def update(self) -> None:
+        #检测是否被坦克吃掉
         ls=pg.sprite.spritecollide(self,PlayerTank.tanks,False)
         if ls:
             self.beEaten(ls[0])
             self.kill()
+        #存在时间减少
         self.life-=1
+        #闪烁
         if self.life%10>5:
             self.image.set_alpha(255)
         else:
@@ -40,15 +43,14 @@ class TankLife(Food):
     def __init__(self,center:tuple):
         super().__init__(configure.foods.tank,center)
     def beEaten(self,obj:PlayerTank=None):
-        #TODO 加命
-        pass
+        obj.collection.addLife()
 
 class Hat(Food):
     def __init__(self,center:tuple):
         super().__init__(configure.foods.hat,center)
     def beEaten(self,obj:PlayerTank=None):
         #TODO 戴帽子
-        obj.setInvincible(3000)
+        obj.setInvincible(100)
 
 class Bomb(Food):
     def __init__(self,center:tuple):
@@ -62,8 +64,7 @@ class Clock(Food):
         super().__init__(configure.foods.clock,center)
     def beEaten(self,obj:PlayerTank=None):
         # obj.setTiming(3000)
-        for i in EnemyTank.tanks:
-            i.setTiming(3000)
+        EnemyTank.setTiming(300)
 class Shovel(Food):
     def __init__(self,center:tuple):
         super().__init__(configure.foods.shovel,center)
@@ -72,5 +73,6 @@ class Shovel(Food):
         pass
 
 def foodRandom(center:tuple):
-    return random.sample([Shovel,Hat,Clock,Bomb,TankLife,Star],1)[0](center)
-    # return Star(center)
+    # return random.sample([Shovel,Hat,Clock,Bomb,TankLife,Star],1)[0](center)
+    return random.sample([Hat,Clock,Bomb ,Star,TankLife],1)[0](center)
+    # return Hat(center)

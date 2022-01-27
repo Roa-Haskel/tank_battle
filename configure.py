@@ -11,6 +11,7 @@ class _Configure:
         self.terrains=self.__terrains()
         self.level=self.__level()
         self.foods=self.__foods()
+        self.image=self.conf.get('common','image')
     @staticmethod
     def attrParser(attrStr):
         return [int(i) if i.isnumeric() else i for i in attrStr.split(",")]
@@ -32,8 +33,17 @@ class _Configure:
         return TankConf
     def __effects(self):
         class Effects:
-            explodeImgs=self.conf.get("effects",'explode')
-            tankBirthImgs=self.conf.get("effects",'tank_birth')
+            def __paramsParser(param:str):
+                images,nums=param.split(";")
+                nums=int(nums)
+                images=eval(images)
+                size=images[-1]-images[1]
+                images=[[images[0],images[1]+size*i,images[2],images[3]+size*i] for i in range(nums)]
+                return images
+            bigExplodeImgs=__paramsParser(self.conf.get("effects",'big_explode'))
+            smallExplodeImgs=__paramsParser(self.conf.get('effects','small_explode'))
+            tankBirthImgs=__paramsParser(self.conf.get("effects",'tank_birth'))
+            tankHat=__paramsParser(self.conf.get("effects",'tank_hat'))
         return Effects
     def __terrains(self):
         class Terrains:

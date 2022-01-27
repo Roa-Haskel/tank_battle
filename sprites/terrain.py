@@ -3,13 +3,21 @@ from pygame.sprite import Group
 from configure import configure
 from utils import load_image
 from pygame import transform,Rect
+from sprites.effects import SmallExplode
 
+
+#地形元素类，砖块、钢、树、冰、水
 class Terrain(AbsSparite):
     class types:
+        #砖头
         brick="b"
+        #钢
         steel="s"
+        #水
         water='w'
+        #冰
         ice='i'
+        #树
         tree='t'
     __terrainTypes=[i for i in dir(types) if not i.startswith("__")]
     imageSize=None
@@ -43,7 +51,8 @@ class Terrain(AbsSparite):
     def getShot(self,bullet):
         if not self.destroy:
             return
-        bullet.hit(False,1)
+        bullet.hit(True)
+        # SmallExplode(self.rect.center)
         if bullet.power>self.destroy:
             self.kill()
         elif self.type==self.types.brick:
@@ -60,9 +69,6 @@ class Terrain(AbsSparite):
                 self.rect.move_ip(0,x)
             else:
                 self.image=transform.chop(self.image, Rect(x, 0, 0, x))
-            self.rect.size=self.image.get_rect().size
-            #self.image=transform.chop(self.image,rect)
-            #self.rect=self.image.get_rect()
 
 
 

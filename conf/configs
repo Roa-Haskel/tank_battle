@@ -1,3 +1,6 @@
+[common]
+image=texture.png
+
 [players]
 #属性=生命值,移动速度,子弹速度,子弹数量,子弹威力
 attr=1,5,10,1,1
@@ -9,15 +12,17 @@ level3=tanks/player3.png
 
 [enemys]
 #属性=生命值,移动速度,子弹速度,子弹数量,子弹威力,图像
-a=3,5,6,1,1,tanks/enemy_a.png
-b=2,2,3,1,1,tanks/enemy_b.png
+a=3,5,20,1,1,tanks/enemy_a.png
+b=2,2,20,1,1,tanks/enemy_b.png
 c=1,2,3,1,1,tanks/player0.png
 d=1,2,3,1,1,tanks/player0.png
 e=1,2,3,1,1,tanks/player0.png
 
 [effects]
-explode=effects/explode
-tank_birth=effects/birth
+small_explode=[1103,0,1140,32];5
+big_explode=[1038, 0, 1102, 64];7
+tank_birth=[31.5*32,0,32.5*32,32];10
+tank_hat=[30.5*32,0,31.5*32,32];2
 
 [terrains]
 #地形=图片,可摧毁,碰撞

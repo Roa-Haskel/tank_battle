@@ -1,21 +1,80 @@
 from .abs_sprite import AbsSparite
 import pygame as pg
 from attrs import TankAttr
-from .bullet import Bullet
 from utils import load_image,crossArea,load_sound
-from .effects import Explode,TankBirth
+from .effects import TankBirth,TankHat,BigExplode,SmallExplode
 from functools import reduce
 from .terrain import Terrain
 
-def chickNascency(func):
-    return lambda *args,**kwargs:func(*args,**kwargs) if not getattr(args[0],'isNascency') else None
+#子弹类
+class Bullet(AbsSparite):
+    imgFile='bullet.png'
+    bullets=pg.sprite.Group()
+    def __init__(self,emitter:'Tank',center:tuple,direction:tuple,speed:int,power:int,*groups):
+        super().__init__(self.bullets,*groups)
+        self.speed=speed
+        self.power=power
+        self.center=center
+        self.direction=direction
+        if direction[0]>0:
+            angle=-90
+        elif direction[0]<0:
+            angle=90
+        elif direction[1]>0:
+            angle=180
+        else:
+            angle=0
+        self.image=pg.transform.rotate(load_image(self.imgFile,True),angle)
+        self.rect=self.image.get_rect()
+        self.rect.center=center
+        #发射器是谁
+        self.emitter=emitter
+    def update(self):
+        #沿着前进方向冲
+        self.rect.move_ip(*[i*self.speed for i in self.direction])
+        #如果撞到边缘则毁灭
+        if not self.mapRect.inflate(-30,-30).colliderect(self.rect):
+            self.hit()
+        #检测是是否击中其他物体
+        for group in [Terrain.terranins,PlayerTank.tanks,EnemyTank.tanks]:
+            ls=pg.sprite.spritecollide(self,group,False)
+            for i in ls:
+                i.getShot(self)
+                if isinstance(i,Tank):
+                    break
+        #检测子弹间的抵消
+        ls=pg.sprite.spritecollide(self,self.bullets,False)
+        for i in ls:
+            if i is not self and type(self.emitter)!=type(i.emitter):
+                self.hit(False)
+                i.hit(False)
 
-#检测各类状态，有一个为真则被装饰的方法将失效
+    #击中
+    def hit(self,explode:bool=True,kill:bool=True):
+        if self.alive():
+            if explode:
+                center=list(self.rect.center)
+                # if self.direction==[1,0]:
+                #     center[0]+self.rect.width
+                # elif self.direction==[-1,0]:
+                #     center[0]-=self.rect.width
+                # elif self.direction==[0,1]:
+                #     center[1]+=self.rect.height
+                # else:
+                #     center[1]-=self.rect.height
+                SmallExplode(center)
+                self.kill()
+            if kill:
+                self.kill()
+
+
+#检测精灵中某属性是否为真，若某属性为真，被装饰的类方法将失效
 def chickStatus(*attrs:str):
     def decorator(func):
         return lambda *args,**kwargs:func(*args,**kwargs) if not any([getattr(args[0],i) for i in attrs]) else None
     return decorator
 
+#坦克基础类
 class Tank(AbsSparite):
     tanks=pg.sprite.Group()
     rectSize=(48,48)
@@ -39,13 +98,17 @@ class Tank(AbsSparite):
         self.rect=self.image.get_rect()
         # self.rect=pg.Rect(*leftTop,*self.rectSize)
         self.rect.topleft=leftTop
-        self.invincible=30
+        self.invincible=0
         self.bullets=pg.sprite.Group()
         #是否初生态
         self.isNascency=30
         self.image.set_alpha(0)
         #出生态动画
         TankBirth(self.rect.center, self.isNascency)
+        self.__chickToHit()
+    def __chickToHit(self):
+        pg.sprite.spritecollide(self,Terrain.terraninsObs,True)
+
     #@chickNascency
     @chickStatus("isNascency",'timing')
     def move(self, direction,*groups):
@@ -108,7 +171,9 @@ class Tank(AbsSparite):
                 #撞墙检测
                 self.rect = self.rect.clamp(self.mapRect)
     #设置无敌
-    def setInvincible(self,duration:int):
+    def setInvincible(self,duration:int=100):
+        if not self.invincible:
+            TankHat(self)
         self.invincible=duration
 
     @chickStatus('isNascency')
@@ -119,9 +184,10 @@ class Tank(AbsSparite):
             if self.attr.life<1:
                 self.explode()
                 return self
+
     def explode(self):
         self.kill()
-        Explode(self.rect.center)
+        BigExplode(self.rect.center)
         load_sound("bang.wav").play()
     def update(self):
         self.chickInvincible()
@@ -134,8 +200,6 @@ class Tank(AbsSparite):
         elif self.invincible:
             #TODO 显示无敌
             self.invincible-=1
-    def setInvincible(self,frame:int):
-        self.invincible=frame
     #发射子弹
     @chickStatus('timing','isNascency')
     def gunpos(self):
@@ -153,14 +217,7 @@ class Tank(AbsSparite):
             pos=self.rect.midtop
         #发射子弹
         Bullet(self,pos,self.direction,self.attr.bulletSpeed,self.attr.bulletPower,self.bullets)
-    #检测是否击中别的坦克
-    @chickNascency
-    def killTanks(self,group):
-        for bullet,tanks in pg.sprite.groupcollide(self.buttons,group,0,0).items():
-            for tank in tanks:
-                if isinstance(tank,Tank):
-                    bullet.hit(not tank.isNascency)
-                    return tank.getShot()
+
 
 class PlayerTank(Tank):
     tanks = pg.sprite.Group()
@@ -170,6 +227,8 @@ class PlayerTank(Tank):
         super().__init__(attr,leftTop)
         self.direction=(0,-1)
         self.killed=[]
+        self.setInvincible()
+        self.collection=None
     def upgrade(self,grade:int=1):
         self.level+=grade
         if self.level==1:
@@ -195,6 +254,10 @@ class PlayerTank(Tank):
         else:
             #TODO 定住不能动
             pass
+    def setCollection(self,collection):
+        self.collection=collection
+
+
 class EnemyTank(Tank):
     tanks = pg.sprite.Group()
     def __init__(self,leftTop:tuple,_type:str):
@@ -204,16 +267,9 @@ class EnemyTank(Tank):
         self.direction=(0,1)
     def update(self):
         super().update()
-        if self.timing:
-            self.timing-=1
         if self.attr.life>1:
             #TODO 变色
             pass
     def getShot(self,bullet:Bullet):
         if type(self)!=type(bullet.emitter):
             super().getShot(bullet)
-
-
-
-if __name__ == '__main__':
-    pass

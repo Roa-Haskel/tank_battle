@@ -1,5 +1,7 @@
 import pygame as pg
 import os
+from configure import configure
+from PIL import Image
 
 imageBasePath=os.path.join(os.path.dirname(__file__),"resources","images")
 soundBasePath=os.path.join(os.path.dirname(__file__),"resources","sound")
@@ -36,3 +38,19 @@ def load_sound(name):
 
 def crossArea(rect:pg.Rect,rects:list)->int:
     return sum([i[0]*i[1] for i in [rect.clip(i).size for i in rects]])
+
+
+class BaseImage:
+    image=Image.open(os.path.join(imageBasePath,configure.image))
+    @classmethod
+    def getLocal(cls, box:list):
+        img=cls.image.crop(box)
+        return pg.image.frombuffer(img.tobytes(),img.size,"RGBA").convert_alpha()
+    @classmethod
+    def getLocals(cls,*boxs:list):
+        return [cls.getLocal(i) for i in boxs]
+
+    @classmethod
+    def close(cls):
+        cls.image.close()
+
