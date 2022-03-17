@@ -10,6 +10,16 @@ from .terrain import Terrain
 class Bullet(AbsSparite):
     imgFile='bullet.png'
     bullets=pg.sprite.Group()
+
+    @classmethod
+    def bulletSetOff(cls):
+        for bt1, bt2s in dict(pg.sprite.groupcollide(EnemyTank.bullets, PlayerTank.bullets, False, False)).items():
+            bt1.hit(False)
+            bt2s[0].hit(False)
+    @classmethod
+    def groupUpdate(cls):
+        cls.bulletSetOff()
+
     def __init__(self,emitter:'Tank',center:tuple,direction:tuple,speed:int,power:int,*groups):
         super().__init__(self.bullets,*groups)
         self.speed=speed
@@ -30,11 +40,8 @@ class Bullet(AbsSparite):
         #发射器是谁
         self.emitter=emitter
     def update(self):
-        #沿着前进方向冲
-        self.rect.move_ip(*[i*self.speed for i in self.direction])
-        #如果撞到边缘则毁灭
-        if not self.mapRect.inflate(-30,-30).colliderect(self.rect):
-            self.hit()
+        center=self.rect.center
+        self.rect=self.rect.clamp(self.mapRect)
         #检测是是否击中其他物体
         for group in [Terrain.terranins,PlayerTank.tanks,EnemyTank.tanks]:
             ls=pg.sprite.spritecollide(self,group,False)
@@ -42,12 +49,23 @@ class Bullet(AbsSparite):
                 i.getShot(self)
                 if isinstance(i,Tank):
                     break
-        #检测子弹间的抵消
-        ls=pg.sprite.spritecollide(self,self.bullets,False)
-        for i in ls:
-            if i is not self and type(self.emitter)!=type(i.emitter):
-                self.hit(False)
-                i.hit(False)
+
+        if center!=self.rect.center:
+            self.hit()
+            return
+
+        # #检测子弹间的抵消
+        # ls=pg.sprite.spritecollide(self,self.bullets,False)
+        # for i in ls:
+        #     if i is not self and type(self.emitter)!=type(i.emitter):
+        #         self.hit(False)
+        #         i.hit(False)
+
+        # 沿着前进方向冲
+        self.rect.move_ip(*[i * self.speed for i in self.direction])
+        # 如果撞到边缘则毁灭
+        # if not self.mapRect.inflate(-30, -30).colliderect(self.rect):
+        #     self.hit()
 
     #击中
     def hit(self,explode:bool=True,kill:bool=True):
@@ -68,7 +86,7 @@ class Bullet(AbsSparite):
                 self.kill()
 
 
-#检测精灵中某属性是否为真，若某属性为真，被装饰的类方法将失效
+#检测精灵中某属性值是否大于0，若某属性为真，被装饰的类方法将失效
 def chickStatus(*attrs:str):
     def decorator(func):
         return lambda *args,**kwargs:func(*args,**kwargs) if not any([getattr(args[0],i) for i in attrs]) else None
@@ -78,6 +96,7 @@ def chickStatus(*attrs:str):
 class Tank(AbsSparite):
     tanks=pg.sprite.Group()
     rectSize=(48,48)
+    bullets=pg.sprite.Group()
     # 定住
     timing = 0
     # 设置定时
@@ -99,10 +118,10 @@ class Tank(AbsSparite):
         # self.rect=pg.Rect(*leftTop,*self.rectSize)
         self.rect.topleft=leftTop
         self.invincible=0
-        self.bullets=pg.sprite.Group()
+        # self.bullets=pg.sprite.Group()
         #是否初生态
         self.isNascency=30
-        self.image.set_alpha(0)
+        # self.image.set_alpha(0)
         #出生态动画
         TankBirth(self.rect.center, self.isNascency)
         self.__chickToHit()
@@ -197,6 +216,8 @@ class Tank(AbsSparite):
             self.isNascency-=1
             if not self.isNascency:
                 self.image.set_alpha(255)
+            else:
+                self.image.set_alpha(0)
         elif self.invincible:
             #TODO 显示无敌
             self.invincible-=1
@@ -221,7 +242,8 @@ class Tank(AbsSparite):
 
 class PlayerTank(Tank):
     tanks = pg.sprite.Group()
-    def __init__(self,leftTop:tuple,playerNum:int=1):
+    bullets = pg.sprite.Group()
+    def __init__(self,leftTop:tuple,playerNum:int=1,level=0):
         attr = self.configure.tank.getPlayerAttr(playerNum)
         attr=TankAttr(*attr)
         super().__init__(attr,leftTop)
@@ -229,10 +251,12 @@ class PlayerTank(Tank):
         self.killed=[]
         self.setInvincible()
         self.collection=None
-    def upgrade(self,grade:int=1):
-        self.level+=grade
+        if level:
+            self.upgrade(level)
+    def __upgrade(self):
+        self.level+=1
         if self.level==1:
-            self.attr.bulletSpeed*=2
+            self.attr.bulletSpeed*=3
         elif self.level==2:
             self.attr.bulletNum+=1
         elif self.level==3:
@@ -248,6 +272,9 @@ class PlayerTank(Tank):
         else:
             angle=0
         self.image=pg.transform.rotate(image,angle)
+    def upgrade(self,grade:int=1):
+        for i in range(grade):
+            self.__upgrade()
     def getShot(self,bullet:Bullet):
         if type(bullet.emitter)!=type(self):
             super().getShot(bullet)
@@ -260,6 +287,7 @@ class PlayerTank(Tank):
 
 class EnemyTank(Tank):
     tanks = pg.sprite.Group()
+    bullets = pg.sprite.Group()
     def __init__(self,leftTop:tuple,_type:str):
         attr=self.configure.tank.getEnemysAttr(_type)
         attr=TankAttr(*attr)

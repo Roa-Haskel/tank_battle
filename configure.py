@@ -12,6 +12,7 @@ class _Configure:
         self.level=self.__level()
         self.foods=self.__foods()
         self.image=self.conf.get('common','image')
+        self.keyboard=self.___keyboard()
     @staticmethod
     def attrParser(attrStr):
         return [int(i) if i.isnumeric() else i for i in attrStr.split(",")]
@@ -68,7 +69,11 @@ class _Configure:
             tank=self.conf.get("foods","tank")
             life=int(self.conf.get('foods','life'))
         return Food
-
+    def ___keyboard(self):
+        class Keyboard:
+            direction=self.conf.get("keyboard","direction").split(",")
+            gunpos=self.conf.get("keyboard",'gunpos')
+        return Keyboard
 
 
 configure=_Configure()

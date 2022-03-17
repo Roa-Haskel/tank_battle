@@ -75,4 +75,4 @@ class Shovel(Food):
 def foodRandom(center:tuple):
     # return random.sample([Shovel,Hat,Clock,Bomb,TankLife,Star],1)[0](center)
     return random.sample([Hat,Clock,Bomb ,Star,TankLife],1)[0](center)
-    # return Hat(center)
+    # return Star(center)
