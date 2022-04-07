@@ -1,6 +1,7 @@
 import random
 
 def move(direction:tuple):
+    # return [0,0]
     if random.random()>0.95:
         if random.random()>0.5:
             dis=1
@@ -13,4 +14,5 @@ def move(direction:tuple):
     else:
         return direction
 def gunpos():
-    return random.random()>0.1
+    # return False
+    return random.random()>0.3

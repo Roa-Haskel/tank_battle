@@ -17,9 +17,9 @@ class Player:
         self.life+=1
     def update(self):
         #死亡有命再生
-        if self.tank is None or (not self.tank.alive() and self.life>0):
-            self.life-=1
+        if self.tank is None or (not self.tank.alive() and self.life>=0):
             self.tank=self.createTank()
+            self.life-=1
         if self.tank.alive() and self.controller:
             dis,gunpos=self.controller.getInstructions()
             if any(dis):
@@ -30,8 +30,8 @@ class Player:
 
     def createTank(self):
         tank=PlayerTank(self.position,self.num,level=self.level)
-        self.level=3
         tank.setCollection(self)
+        self.level=0
         return tank
     def close(self):
         self.level = self.tank.level

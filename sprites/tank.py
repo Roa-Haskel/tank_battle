@@ -11,6 +11,7 @@ class Bullet(AbsSparite):
     imgFile='bullet.png'
     bullets=pg.sprite.Group()
 
+    #检测子弹间的抵消
     @classmethod
     def bulletSetOff(cls):
         for bt1, bt2s in dict(pg.sprite.groupcollide(EnemyTank.bullets, PlayerTank.bullets, False, False)).items():
@@ -96,7 +97,7 @@ def chickStatus(*attrs:str):
 class Tank(AbsSparite):
     tanks=pg.sprite.Group()
     rectSize=(48,48)
-    bullets=pg.sprite.Group()
+    bullets = pg.sprite.Group()
     # 定住
     timing = 0
     # 设置定时
@@ -109,6 +110,7 @@ class Tank(AbsSparite):
             cls.timing-=1
     def __init__(self,attr:TankAttr,leftTop:tuple):
         super().__init__(self.tanks)
+        self.__bullets = pg.sprite.Group()
         self.attr=attr
         self.image = attr.image
         self.direction=(0,1)
@@ -132,9 +134,8 @@ class Tank(AbsSparite):
     @chickStatus("isNascency",'timing')
     def move(self, direction,*groups):
         if direction[0] or direction[1]:
-            #如果移动方向和之前不一致
+            #如果移动方向和之前不一致，旋转surface
             if direction[0]!=self.direction[0] or direction[1] !=self.direction[1]:
-                #旋转surface
                 if abs(self.direction[0]-direction[0])>1 or abs(self.direction[1]-direction[1])>1:
                     angle=180
                 elif direction[0]:
@@ -225,7 +226,7 @@ class Tank(AbsSparite):
     @chickStatus('timing','isNascency')
     def gunpos(self):
         #判断发射冷却
-        if len(self.bullets)>=self.attr.bulletNum:
+        if len(self.__bullets)>=self.attr.bulletNum:
             return
         #根据坦克方向获取发射坐标
         if self.direction[0]>0:
@@ -237,7 +238,7 @@ class Tank(AbsSparite):
         else:
             pos=self.rect.midtop
         #发射子弹
-        Bullet(self,pos,self.direction,self.attr.bulletSpeed,self.attr.bulletPower,self.bullets)
+        Bullet(self,pos,self.direction,self.attr.bulletSpeed,self.attr.bulletPower,self.__bullets,self.bullets)
 
 
 class PlayerTank(Tank):

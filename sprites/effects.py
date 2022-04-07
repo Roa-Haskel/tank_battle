@@ -63,6 +63,8 @@ class TankHat(Effects):
         self.duration=self.tank.invincible
         super().update()
         self.rect.center=self.tank.rect.center
+        if not self.tank.alive():
+            self.kill()
 
 
 if __name__ == '__main__':

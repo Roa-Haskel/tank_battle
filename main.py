@@ -27,30 +27,27 @@ if __name__ == '__main__':
     bg=pg.Surface(SCREENRECT.size)
     screen.blit(bg, (0, 0))
 
-    # sc.removeOverlapMapData()
-    # sc.initTerrains()
 
     #播放关卡开始背景音乐
     startSound=load_sound("start.wav")
-
 
     #创建控制器
     controller=Controller()
 
     #创建player1
-    player1=Player(3,3,controller=controller)
+    player1=Player(3,0,controller=controller)
 
     #创建敌军坦克阵营
-    ls=['a' for i in range(50)]
+    ls=['a' for i in range(20)]
     for i in range(0,len(ls),2):
         ls[i]='b'
 
     #创建地图并初始化
-    for i in range(1,35):
+    for i in range(1,33):
         with SceneMap(i) as scMp:
             startSound.play()
-            enemy = Enemy(ls, 8)
-            while player1.life and len(enemy):
+            enemy = Enemy(ls, 4)
+            while player1.life>=0 and len(enemy):
                 controller.loop()
                 player1.update()
                 enemy.update()
@@ -65,8 +62,9 @@ if __name__ == '__main__':
                 dirty = AbsSparite.allSprites.draw(screen)
                 pg.display.update(dirty)
                 AbsSparite.allSprites.clear(screen,bg)
-                clock.tick(24)
-            if not player1.life:
+                clock.tick(60)
+            if player1.life<0:
                 os._exit(0)
+            print(player1.life)
             print("------------")
             player1.close()

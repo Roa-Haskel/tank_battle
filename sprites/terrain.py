@@ -1,5 +1,5 @@
 from .abs_sprite import AbsSparite
-from pygame.sprite import Group
+from pygame.sprite import Group,LayeredUpdates
 from configure import configure
 from utils import load_image
 from pygame import transform,Rect
@@ -21,6 +21,8 @@ class Terrain(AbsSparite):
         tree='t'
     __terrainTypes=[i for i in dir(types) if not i.startswith("__")]
     imageSize=None
+    terranins = Group()
+    terraninsObs = Group()
     @classmethod
     def getImageSize(cls):
         if not cls.imageSize:
@@ -33,8 +35,7 @@ class Terrain(AbsSparite):
     @classmethod
     def createTerrain(cls,inx:int=0):
         return cls(cls.__terrainTypes[inx])
-    terranins=Group()
-    terraninsObs=Group()
+
     def __init__(self,_type:str,leftTop:tuple):
         attr=configure.terrains.getAttr(_type)
         self.image=load_image(attr[0])
